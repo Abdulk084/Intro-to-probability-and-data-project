@@ -1,0 +1,301 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(corrplot)
+```
+
+### Load data
+ 
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+
+The Behavioral Risk Factor Surveillance System (BRFSS) is the  system of health-related telephone surveys that collect state data about U.S. residents regarding their health-related risk behaviors, chronic health conditions, and use of preventive services.
+
+# Sample Collection
+
+The samples were collected by land-line telephonic surveys and cell-phones telephonic surveys.
+In conducting the BRFSS landline telephone survey, interviewers collect data from a randomly selected adult in a household. 
+In conducting the cellular telephone version of the BRFSS questionnaire, interviewers collect data from an adult who participates by using a cellular telephone and resides in a private residence or college housing.
+Disproportionate stratified sampling was used for land-line telephones. And the cellular phone sample is randomly generated from the combination od area code and prefix.
+
+# Inference
+
+If we look at the sample collection methods, we would conclude that this is an observational study. It uses stratified sampling method based on random digit dialing methods. 
+
+
+
+# Generabizability
+
+
+Using this type of random digit dialing and Disproportionate stratified sampling, we can canclude that this study can be generalized to the population of all non-institutionalized adults of 18 years and above 
+
+
+
+# Causality
+
+As this is an observational study, so we can not be sure about causality. We can only be sure about associations.
+
+
+
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+
+How does the sleeping time (duration) affect the general health. In other words, is there any association between variable genhlth: General Health and sleptim1: How Much Time Do You Sleep. This question is of an interest because generally, good sleeping habits might be associated with general good health. 
+
+**Research quesion 2:**
+
+Generally, people with reasonable consumption of vegetables and fruits per day are healthier. 
+It would be interesting to know that what is the association between vegetables and fruits comsumption with the general health. In other words, association between frutsum variable and vegesum variable with the variable genhlth.
+
+
+**Research quesion 3:**
+
+Is there any association between bmi5cat: Computed Body Mass Index catefory and the consumption of vegetables and fruits
+
+It would be interesting to know about how the BMI category is affected by vegetable and fruits intake.
+
+
+
+
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+
+
+**Research quesion 1 :**
+ 
+The mean and STD of sleeping hours  for different general health categories are computed. The following code shows the summary statistics of sleeping hours for four general health categories.
+
+```{r}
+
+df1 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Poor') %>% filter(sleptim1 !='NA') %>% summarise(mean_poorhealth_sleep = mean(sleptim1), sd_poorhealth_sleep = sd(sleptim1), n = n())
+df1
+
+df2 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Good') %>% filter(sleptim1 !='NA') %>% summarise(mean_goodhealth_sleep = mean(sleptim1), sd_goodhealth_sleep = sd(sleptim1), n = n())
+df2
+
+df3 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Very good') %>% filter(sleptim1 !='NA') %>% summarise(mean_vgoodhealth_sleep = mean(sleptim1), sd_vgoodhealth_sleep = sd(sleptim1), n = n())
+df3
+df4 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Excellent') %>% filter(sleptim1 !='NA') %>% summarise(mean_excellenthealth_sleep = mean(sleptim1), sd_excellenthealth_sleep = sd(sleptim1), n = n())
+df4
+
+
+```
+
+```{r}
+mean_sleep_vector <- c(df1$mean_poorhealth_sleep,df2$mean_goodhealth_sleep,df3$mean_vgoodhealth_sleep,df4$mean_excellenthealth_sleep)
+
+mean_sleep_vector
+
+
+sd_sleep_vector <- c(df1$sd_poorhealth_sleep,df2$sd_goodhealth_sleep,df3$sd_vgoodhealth_sleep,df4$sd_excellenthealth_sleep)
+
+sd_sleep_vector
+
+names <- c("poorhealth", "goodhealth", "vgoodhealth", "excellenthealth")
+
+barplot(sd_sleep_vector, names.arg=names, cex.names=.9, ylab = 'STD in hrs sleep', main='STD in hours for various health categories', xlab="Genral health category") 
+lines(sd_sleep_vector, col='Red')
+
+
+
+barplot(mean_sleep_vector, names.arg=names, cex.names=.9, ylab = 'mean of hrs sleep', main='Mean of hours sleep for various health categories', xlab="Genral health category") 
+lines(mean_sleep_vector, col='Red')
+
+```
+
+For excellent, good and very good health category, STD for sleeping hours is relatively smaller than the poor general health category.
+Similarly, the mean of sleeping hours for excellent, good and very good health category is more than the mean sleeping hours of poor general health category people.
+
+From the summary statistics and the plots, it is shown the generally poor health is associated with less sleep. Though, this difference is not huge, yet general health is slightly associated with the sleep.
+
+
+People with around 7 hours per day sleep are more healtheir than the people with less than 7 hours per day sleep.
+
+
+
+**Research quesion 2:**
+
+
+Below, we have computed the mean consumption of fruits and vegetables for all four general health categories.
+```{r}
+df5 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Poor') %>% filter(X_vegesum !='NA') %>% summarise(mean_poorhealth_veg = mean(X_vegesum))
+df5
+
+df6 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Good') %>% filter(X_vegesum !='NA') %>% summarise(mean_goodhealth_veg = mean(X_vegesum))
+df6
+
+df7 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Very good') %>% filter(X_vegesum !='NA') %>% summarise(mean_vgoodhealth_veg = mean(X_vegesum))
+df7
+
+df8 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Excellent') %>% filter(X_vegesum !='NA') %>% summarise(mean_excellenthealth_veg = mean(X_vegesum))
+df8
+
+
+
+df9 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Poor') %>% filter(X_frutsum !='NA') %>% summarise(mean_poorhealth_fruit = mean(X_frutsum))
+df9
+
+df10 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Good') %>% filter(X_frutsum !='NA') %>% summarise(mean_goodhealth_fruit = mean(X_frutsum))
+df10
+
+df11 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Very good') %>% filter(X_frutsum !='NA') %>% summarise(mean_vgoodhealth_fruit = mean(X_frutsum))
+df11
+
+df12 <-brfss2013 %>% filter(genhlth != "NA") %>% filter(genhlth == 'Excellent') %>% filter(X_frutsum !='NA') %>% summarise(mean_excellenthealth_fruit = mean(X_frutsum))
+df12
+
+
+```
+
+It is shown that people who consumes more vegetable and fruits are generally healthier.
+
+We also plot  the vegetable and fruit mean consumption for various general helath categories
+
+
+```{r}
+mean_veg_vector <- c(df5$mean_poorhealth_veg,df6$mean_goodhealth_veg,df7$mean_vgoodhealth_veg,df8$mean_excellenthealth_veg)
+
+mean_veg_vector
+
+names <- c("poorhealth", "goodhealth", "vgoodhealth", "excellenthealth")
+barplot(mean_veg_vector, names.arg=names, cex.names=.9, ylab = 'mean of veg consumption', main='Mean of veg consumption for various health categories', xlab="Genral health category") 
+lines(mean_veg_vector, col='Red')
+
+
+
+
+
+mean_fruit_vector <- c(df9$mean_poorhealth_fruit,df10$mean_goodhealth_fruit,df11$mean_vgoodhealth_fruit,df12$mean_excellenthealth_fruit)
+
+mean_fruit_vector
+
+names <- c("poorhealth", "goodhealth", "vgoodhealth", "excellenthealth")
+barplot(mean_fruit_vector, names.arg=names, cex.names=.9, ylab = 'mean of fruits consumption', main='Mean of fruits consumption for various health categories', xlab="Genral health category") 
+lines(mean_fruit_vector, col='Red')
+
+```
+In both the above plots, we see a clear association of better health and more consumption of fruits and vegetables.
+
+
+
+
+
+
+
+
+
+
+
+
+
+**Research quesion 3:**
+
+
+Here we provide the mean veg and fruits consumption for various BMI categories.
+```{r}
+df13 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Underweight') %>% filter(X_vegesum !='NA') %>% summarise(mean_Underweight_veg = mean(X_vegesum))
+df13
+
+df14 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Normal weight') %>% filter(X_vegesum !='NA') %>% summarise(mean_NormalWeight_veg = mean(X_vegesum))
+df14
+
+df15 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Overweight') %>% filter(X_vegesum !='NA') %>% summarise(mean_Overweight_veg = mean(X_vegesum))
+df15
+
+df16 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Obese') %>% filter(X_vegesum !='NA') %>% summarise(mean_Obese_veg = mean(X_vegesum))
+df16
+
+
+
+df17 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Underweight') %>% filter(X_frutsum !='NA') %>% summarise(mean_Underweight_fruit = mean(X_frutsum))
+df17
+
+df18 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Normal weight') %>% filter(X_frutsum !='NA') %>% summarise(mean_NormalWeight_fruit = mean(X_frutsum))
+df18
+
+df19 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Overweight') %>% filter(X_frutsum !='NA') %>% summarise(mean_Overweight_fruit = mean(X_frutsum))
+df19
+
+df20 <-brfss2013 %>% filter(X_bmi5cat != "NA") %>% filter(X_bmi5cat == 'Obese') %>% filter(X_frutsum !='NA') %>% summarise(mean_Obese_fruit = mean(X_frutsum))
+df20
+
+
+```
+The mean fuits and vegetable consumption for normal weight people is higher.
+
+Now we provide the plotting to see any pattern (if there is).
+
+
+```{r}
+mean_veg_vector_bmi <- c(df13$mean_Underweight_veg,df14$mean_NormalWeight_veg,df15$mean_Overweight_veg,df16$mean_Obese_veg)
+
+mean_veg_vector_bmi
+
+names <- c("Underweight", "NormalWeight", "Overweight", "Obese")
+barplot(mean_veg_vector_bmi, names.arg=names, cex.names=.9, ylab = 'mean of veg consumption', main='Mean of veg consumption for various BMI categories', xlab="BMI category") 
+lines(mean_veg_vector_bmi, col='Red')
+
+
+
+
+
+mean_fruit_vector_bmi <- c(df17$mean_Underweight_fruit,df18$mean_NormalWeight_fruit,df19$mean_Overweight_fruit,df20$mean_Obese_fruit)
+
+mean_fruit_vector_bmi
+
+names <- c("Underweight", "NormalWeight", "Overweight", "Obese")
+barplot(mean_fruit_vector_bmi, names.arg=names, cex.names=.9, ylab = 'mean of fruits consumption', main='Mean of fruits consumption for various BMI categories', xlab="BMI category") 
+lines(mean_fruit_vector_bmi, col='Red')
+
+
+
+```
+
+
+
+
+It can be seen that normal weight BMI category people consume relatively more fruits and vegetables. On the average, obese people consume less vegetables and fruits.
+This relation of fruit and vegetable consumption with the BMI category is associational.
+
+
+
+
+
+
+
+
+
+
+
+
+
